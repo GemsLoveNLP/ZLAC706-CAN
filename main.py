@@ -1,46 +1,28 @@
-import sys
-import termios
-import tty
-from CANOpen import ZLAC8015D  # Assuming your class is in a file named zlac8015d.py
-
-def get_key():
-    """
-    Reads a single key press from standard input.
-    """
-    fd = sys.stdin.fileno()
-    old_settings = termios.tcgetattr(fd)
-    try:
-        tty.setraw(fd)
-        key = sys.stdin.read(1)
-    finally:
-        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-    return key
-
 def main():
     # Setup the driver
     node_id = 1
     can_interface = "can0"  # Adjust this to match your setup
     zlac = ZLAC8015D(can_interface=can_interface, node_id=node_id)
 
-    # Initialize the driver
-    zlac.clear_alarm()
-    zlac.set_mode(zlac.VEL_CONTROL)
-    zlac.enable_motor()
-
-    print("WASD Control:\n"
-          "W - Forward\n"
-          "S - Backward\n"
-          "A - Left Spin\n"
-          "D - Right Spin\n"
-          "Ctrl+C to quit.")
-
     try:
+        # Initialize the driver
+        zlac.clear_alarm()
+        zlac.set_mode(zlac.VEL_CONTROL)
+        zlac.enable_motor()
+
+        print("WASD Control:\n"
+              "W - Forward\n"
+              "S - Backward\n"
+              "A - Left Spin\n"
+              "D - Right Spin\n"
+              "Ctrl+C to quit.")
+
         while True:
             key = get_key()
 
             if key.lower() == 'w':  # Forward
                 print("Driving forward")
-                zlac.set_rpm(100, 100)  # Adjust RPM as needed
+                zlac.set_rpm(100, 100)
             elif key.lower() == 's':  # Backward
                 print("Driving backward")
                 zlac.set_rpm(-100, -100)
@@ -64,11 +46,11 @@ def main():
 
     except KeyboardInterrupt:
         print("\nExiting on user interrupt.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
     finally:
-        # Stop the motors and disable the driver on exit
+        # Ensure CAN bus and motors are properly shut down
+        print("Shutting down CAN bus and motors...")
         zlac.set_rpm(0, 0)
         zlac.disable_motor()
         zlac.close()
-
-if __name__ == "__main__":
-    main()

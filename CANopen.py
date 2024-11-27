@@ -141,6 +141,16 @@ class ZLAC8015D:
             fault_code = int.from_bytes(message.data[:4], "little")
             return fault_code
         return None
+    
+    def clear_alarm(self):
+        """
+        Clears any active alarms or faults on the driver.
+        """
+        cob_id = 0x600 + self.node_id
+        # Object Dictionary: 0x6040 (Control Word) -> Command: 0x80 (Clear Faults)
+        data = [0x2B, 0x40, 0x60, 0x00, 0x80, 0x00, 0x00, 0x00]
+        self.send_message(cob_id, data)
+
 
     def close(self):
         """
